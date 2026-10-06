@@ -1,7 +1,8 @@
+# Horario Familiar
 
 Horario semanal (lunes a domingo) con **24 franjas por día**, navegable durante todo el año.
 Estructura: **Día → Hora → Actividad**. Cada actividad tiene *Actividad a realizar*, *¿Tiene plazo?* y *Notas generales*.
-Sin login. Datos en Supabase. Avisos locales mientras la app está abierta y Web Push del servidor para dispositivos que ya estén suscritos.
+Sin login. Datos en Supabase. Notificaciones push reales (Web Push).
 
 ```
 index.html                         ← la app (HTML + CSS + JS, sin build)
@@ -95,13 +96,9 @@ python3 -m http.server 8000      # o:  npx serve .
 
 y abre <http://localhost:8000>.
 
-## Avisos locales y notificaciones push
+## Notificaciones push (misma arquitectura de siempre)
 
-El botón de la app activa **avisos locales**: no registra el dispositivo en el servicio Push del navegador. Estos avisos requieren que la página siga abierta; los navegadores pueden pausar una pestaña en segundo plano. Se comprueba la actividad al inicio de la hora, se muestra el resumen diario de las 5:30 a. m. (Bogotá) y se avisa de cambios recibidos por Realtime.
-
-El servidor conserva la Edge Function, el trigger y los trabajos `pg_cron` para entregar Web Push a los dispositivos que ya tengan una suscripción en `push_subscriptions`. El botón de la app ya no crea nuevas suscripciones Web Push.
-
-La configuración que sigue describe el envío Web Push del servidor para suscripciones existentes. Se hace **una vez**.
+Web Push real: llegan aunque la pestaña esté cerrada. Se hace **una vez**.
 
 ```bash
 npm install -g supabase
@@ -127,8 +124,8 @@ supabase functions deploy send-push --project-ref TU_PROJECT_REF
 
 Después ejecuta `sql/02_notificaciones_push.sql` (con tu URL `https://TU_PROJECT_REF.supabase.co/functions/v1/send-push` y el mismo `CRON_SECRET`). `TU_PROJECT_REF` es el identificador de tu proyecto Supabase.
 
-Para avisos locales en un dispositivo, abre la app, pulsa **"🔕 Activar avisos locales"** y acepta el permiso. Mantén la página abierta para que se ejecuten los recordatorios.
-> Los dispositivos que ya estaban suscritos a Web Push pueden seguir recibiendo avisos del servidor. Los nuevos dispositivos usan avisos locales desde el botón de la app.
+Finalmente, en la app pulsa **"🔕 Activar notificaciones"** y acepta el permiso (una vez por cada dispositivo/navegador).
+> Si ese navegador ya tenía las notificaciones activadas con el proyecto anterior, pulsa el botón para **desactivarlas y vuelve a activarlas**: así se registra en la base nueva.
 
 **Qué se notifica** (a todos los dispositivos suscritos, con prioridad alta):
 
