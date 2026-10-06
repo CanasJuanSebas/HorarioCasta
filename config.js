@@ -11,10 +11,10 @@
 // ============================================================
 window.HORARIO_CONFIG = {
   // Supabase → Project Settings → API → Project URL
-  SUPABASE_URL: 'https://TU-PROYECTO.supabase.co',
+  SUPABASE_URL: 'https://lsdsyjahduipgtrkifjf.supabase.co',
 
   // Supabase → Project Settings → API Keys → "anon" (o "Publishable key")
-  SUPABASE_ANON_KEY: 'TU_ANON_O_PUBLISHABLE_KEY',
+  SUPABASE_ANON_KEY: 'sb_publishable_wKxG6cwgmW_bmaYOYtmRMw_c1AyeuLJ',
 
   // Llave pública VAPID para las notificaciones push
   // (la genera: npx web-push generate-vapid-keys)
