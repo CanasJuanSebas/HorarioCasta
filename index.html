@@ -70,14 +70,6 @@ body.dark-mode header h1{color:#dcead5}
 header h1::before{content:"◆";font-size:13px;color:var(--brass)}
 .header-left{display:flex;align-items:center;gap:10px}
 .header-buttons{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-#notif-toggle,#accesoq10,.btn-pill{
-  border:1.5px solid var(--bd);background:var(--sf);border-radius:999px;padding:7px 14px;
-  font:inherit;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
-  color:var(--tx);transition:background .15s,border-color .15s;
-}
-#notif-toggle:hover,#accesoq10:hover,.btn-pill:hover{background:var(--sf3);border-color:var(--brass)}
-#notif-toggle.active{background:var(--g-bg);border-color:var(--g-br);color:var(--g-tx);font-weight:600}
-#accesoq10 a{color:inherit;text-decoration:none}
 
 .switch{position:relative;display:inline-block;width:44px;height:24px}
 .switch input{opacity:0;width:0;height:0}
@@ -323,7 +315,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   <h1>Horario Familiar <span id="connection-status" class="status-dot" title="Desconectado"></span></h1>
   <div class="header-buttons">
     <button id="notif-toggle" title="Recibir notificaciones de actividades">🔕 Activar notificaciones</button>
-    <button id="accesoq10"><a href="https://site6.q10.com/login?ReturnUrl=%2F&aplentId=6b624247-5ec3-4fed-968f-86645e0afb0c" target="_blank" rel="noopener">Acceso a Q10</a></button>
   </div>
 </header>
 
