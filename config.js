@@ -18,5 +18,5 @@ window.HORARIO_CONFIG = {
 
   // Llave pública VAPID para las notificaciones push
   // (la genera: npx web-push generate-vapid-keys)
-  VAPID_PUBLIC_KEY: 'TU_VAPID_PUBLIC_KEY'
+  VAPID_PUBLIC_KEY: 'BMzabl6iZ_cU6CQm6p2J8CFnxBvds_OK8_LcfRcLiX5m5gn8ozUYUx6pIe6ixWwM5VPoDMiYWK48mRYQnzpCU5I'
 };
