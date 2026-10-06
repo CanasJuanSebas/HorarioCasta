@@ -1,0 +1,4 @@
+project_id = "horario"
+
+[functions.send-push]
+verify_jwt = false

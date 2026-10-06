@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horario Familiar</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f3d2b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ============================================================
+   TOKENS — "Cuaderno de campo": bitácora con papel cálido,
+   tinta bosque y bronce.
+   ============================================================ */
+:root{
+  --ink:#221f1a;
+  --paper:#f2ead9;
+  --paper-deep:#e9dfc8;
+
+  --forest:#1f3d2b;
+  --forest-deep:#12261a;
+  --brass:#a9813f;
+  --brass-deep:#7c5e2c;
+
+  --g-bg:#dbe6cd;--g-br:#5f8a4f;--g-tx:#2b4622;      /* libre / hover — salvia */
+  --y-bg:#f2dda3;--y-br:#c2952f;--y-tx:#6b4a09;      /* con actividad — ocre */
+
+  --sf:#fbf7ee;--sf2:#f4eeda;--sf3:#ece3c9;
+  --bd:#d9cba9;
+  --tx:var(--ink);--tx2:#6c6350;--tx3:#a89b7c;
+  --rad:12px;--rad-s:7px;
+}
+body.dark-mode{
+  --ink:#ece4cf;
+  --g-bg:#233d1c;--g-br:#4f7a41;--g-tx:#a9c99a;
+  --y-bg:#4a3608;--y-br:#8a6413;--y-tx:#f2d998;
+
+  --sf:#171310;--sf2:#1e1a15;--sf3:#28221b;
+  --bd:#3a3226;
+  --tx:#ece4cf;--tx2:#a89b7c;--tx3:#6c6350;
+}
+
+body{
+  font-family:'Public Sans',sans-serif;
+  color:var(--tx);
+  min-height:100vh;
+  padding:26px 16px 56px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(34,31,26,.05) 1px, transparent 0) 0 0/22px 22px,
+    var(--paper);
+  transition:background .2s;
+}
+body.dark-mode{
+  background:
+    radial-gradient(circle at 1px 1px, rgba(236,228,207,.04) 1px, transparent 0) 0 0/22px 22px,
+    #0d0b08;
+}
+.page{max-width:1200px;margin:0 auto}
+
+/* ---------- HEADER ---------- */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+header h1{
+  font-family:'Fraunces',serif;font-weight:600;font-size:26px;letter-spacing:-.4px;margin:0;flex:1;
+  text-align:center;color:var(--forest);display:flex;align-items:center;justify-content:center;gap:10px;
+}
+body.dark-mode header h1{color:#dcead5}
+header h1::before{content:"◆";font-size:13px;color:var(--brass)}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-buttons{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+#notif-toggle,#accesoq10,.btn-pill{
+  border:1.5px solid var(--bd);background:var(--sf);border-radius:999px;padding:7px 14px;
+  font:inherit;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  color:var(--tx);transition:background .15s,border-color .15s;
+}
+#notif-toggle:hover,#accesoq10:hover,.btn-pill:hover{background:var(--sf3);border-color:var(--brass)}
+#notif-toggle.active{background:var(--g-bg);border-color:var(--g-br);color:var(--g-tx);font-weight:600}
+#accesoq10 a{color:inherit;text-decoration:none}
+
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--sf3);border:1px solid var(--bd);transition:.3s;border-radius:26px}
+.slider:before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background-color:#fff;transition:.3s;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+input:checked + .slider{background-color:var(--forest);border-color:var(--forest-deep)}
+input:checked + .slider:before{transform:translateX(20px)}
+.dark-mode-label{font-size:12px;color:var(--tx2);font-weight:500}
+
+/* ---------- BARRA DE SEMANA (estilo talonario/ticket) ---------- */
+.week-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;
+  background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--rad);padding:12px 18px;
+  position:relative;box-shadow:0 6px 18px -12px rgba(18,38,26,.4);
+}
+.week-nav{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;flex-shrink:0;
+  border:1.5px solid var(--bd);background:var(--sf2);border-radius:999px;cursor:pointer;
+  font:inherit;font-size:13px;font-weight:600;color:var(--forest);transition:all .12s;
+}
+.week-nav:hover{background:var(--forest);color:#f2ead9;border-color:var(--forest-deep)}
+body.dark-mode .week-nav{color:#dcead5}
+body.dark-mode .week-nav:hover{color:#f2ead9}
+.week-info{text-align:center;flex:1;min-width:0}
+.week-num{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--forest);letter-spacing:.2px}
+body.dark-mode .week-num{color:#dcead5}
+.week-dates{font-size:11px;color:var(--tx2);font-family:'JetBrains Mono',monospace;margin-top:3px;letter-spacing:.3px}
+
+.week-tools{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.goto-date{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);font-weight:500}
+.goto-date input{
+  border:1.5px solid var(--bd);background:var(--sf);border-radius:999px;padding:6px 12px;
+  font:inherit;font-size:12px;color:var(--tx);
+}
+
+/* ---------- LEYENDA ---------- */
+.legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2);font-weight:500}
+.legend-dot{width:11px;height:11px;border-radius:3px;border:1.5px solid}
+.legend-dot.expired{background:var(--y-bg);border-color:var(--y-br);opacity:.5}
+
+/* ---------- TABLA 7 días × 24 horas ---------- */
+.table-wrap{
+  overflow:auto;max-height:78vh;max-height:78dvh;position:relative;
+  border-radius:var(--rad);border:1.5px solid var(--bd);background:var(--sf);
+  box-shadow:0 10px 30px -18px rgba(18,38,26,.45);-webkit-overflow-scrolling:touch;
+}
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:860px}
+thead th{
+  position:sticky;top:0;z-index:3;
+  background:var(--forest);color:#e9e2cd;font-size:10.5px;font-weight:600;letter-spacing:.7px;
+  text-transform:uppercase;padding:9px 6px;border-bottom:1px solid var(--forest-deep);text-align:center;
+  font-family:'Public Sans',sans-serif;
+}
+thead th:first-child{left:0;z-index:4;width:78px;background:var(--forest-deep)}
+thead th.today-head{background:var(--brass-deep);color:#f6ecd6}
+.dh-name{display:block}
+.dh-date{display:block;margin-top:2px;font-size:10px;font-weight:500;letter-spacing:.3px;opacity:.8;text-transform:none;font-family:'JetBrains Mono',monospace}
+
+.time-cell{
+  position:sticky;left:0;z-index:2;
+  background:var(--sf2);border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:6px 4px;
+  text-align:center;vertical-align:middle;font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--tx3);line-height:1.6;white-space:pre;font-weight:500;
+}
+.time-cell.now{background:var(--sf3);color:var(--brass-deep);font-weight:600;box-shadow:inset 3px 0 0 var(--brass)}
+body.dark-mode .time-cell.now{color:var(--brass)}
+
+.cell{
+  border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);border-left:3px solid transparent;
+  padding:0;vertical-align:top;cursor:pointer;height:50px;transition:background .12s,filter .12s;
+}
+.cell:last-child{border-right:none}
+.cell-btn{
+  display:block;width:100%;min-height:50px;padding:7px 8px;
+  appearance:none;-webkit-appearance:none;background:none;border:0;margin:0;
+  font:inherit;color:inherit;text-align:left;cursor:inherit;
+}
+.cell:hover{background:var(--g-bg)}
+.cell.is-today{background:rgba(169,129,63,.07)}
+.cell.is-today:hover{background:var(--g-bg)}
+.cell.yellow,.cell.yellow.is-today{background:var(--y-bg);border-left-color:var(--y-br)}
+.cell.yellow:hover{filter:brightness(.96)}
+.cell.expired{opacity:.62}
+
+.plus{
+  display:flex;align-items:center;justify-content:center;height:34px;
+  color:var(--tx3);font-size:18px;font-weight:400;opacity:.55;
+}
+.cell:hover .plus{opacity:1;color:var(--g-tx)}
+
+.act-text{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:12px;font-weight:700;line-height:1.3;letter-spacing:.1px;color:var(--y-tx);word-break:break-word;
+}
+.due-badge{
+  display:inline-block;margin-top:4px;font-size:9px;background:rgba(255,255,255,.6);border-radius:4px;
+  padding:2px 6px;font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--y-tx);
+}
+.cell.expired .due-badge{text-decoration:line-through}
+.notes-snippet{
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:10px;margin-top:5px;color:var(--tx2);font-style:italic;border-top:1px solid rgba(0,0,0,.08);
+  padding-top:3px;word-break:break-word;
+}
+.notes-snippet:first-child{margin-top:0;padding-top:0;border-top:none}
+body.dark-mode .due-badge{background:rgba(0,0,0,.25)}
+body.dark-mode .notes-snippet{border-top-color:rgba(255,255,255,.1)}
+
+/* ---------- FILA DE PLAZOS (actividades con plazo activo en otros días) ---------- */
+.plazos-row .cell{cursor:default;height:auto}
+.plazos-row .cell:hover{background:transparent}
+.plazos-cell{padding:5px 6px}
+.plazo-badge{
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  width:100%;text-align:left;border:0;cursor:pointer;font:inherit;
+  padding:3px 7px;border-radius:5px;font-size:10px;font-weight:700;margin-bottom:4px;
+  background:var(--y-br);color:#3a2900;word-break:break-word;
+}
+.plazo-badge:hover{filter:brightness(1.08)}
+
+/* ---------- PANEL DE ACTIVIDADES ---------- */
+.acts-panel{
+  margin-top:22px;background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--rad);
+  padding:20px 22px;box-shadow:0 8px 22px -16px rgba(18,38,26,.4);
+}
+.acts-panel h2{
+  font-family:'Fraunces',serif;font-size:16.5px;font-weight:600;margin-bottom:15px;color:var(--forest);
+  display:flex;justify-content:space-between;align-items:center;
+}
+body.dark-mode .acts-panel h2{color:#dcead5}
+
+.act-cards{display:flex;flex-direction:column;gap:10px}
+.act-card{border-radius:var(--rad-s);padding:12px 15px;border-left-width:4px;border-left-style:solid;cursor:pointer;transition:filter .12s}
+.act-card:hover{filter:brightness(.97)}
+.act-card.reg{background:var(--y-bg);border:1.5px solid var(--y-br);border-left-width:4px}
+.ac-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.ac-title{font-size:13px;font-weight:700;color:var(--y-tx)}
+.ac-hour{font-size:10.5px;font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--y-tx)}
+.ac-desc{font-size:12.5px;margin-top:6px;line-height:1.5;color:var(--y-tx);white-space:pre-wrap;word-break:break-word}
+.ac-due{font-size:10.5px;margin-top:5px;font-weight:600;color:var(--y-tx)}
+.act-card.expired{opacity:.6}
+.act-card.expired .ac-due{text-decoration:line-through}
+body.dark-mode .act-card.reg{background:var(--sf2);border-color:var(--y-br)}
+
+.no-acts{text-align:center;padding:24px;font-size:13px;color:var(--tx3);font-style:italic}
+
+/* ---------- MODALES ---------- */
+.overlay{display:none;position:fixed;inset:0;background:rgba(18,15,10,.5);z-index:300;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(2px)}
+.overlay.open{display:flex}
+.modal{
+  background:var(--sf);border-radius:var(--rad);border:1.5px solid var(--bd);padding:26px;width:100%;
+  max-width:400px;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.4);animation:pop .16s ease;position:relative;
+}
+.modal::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--forest),var(--brass))}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal h3{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--forest)}
+body.dark-mode .modal h3{color:#dcead5}
+.modal .msub{font-size:11px;color:var(--tx2);margin-top:3px;margin-bottom:17px;font-family:'JetBrains Mono',monospace}
+.modal label{font-size:12px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--tx2);display:block;margin-bottom:6px;margin-top:13px}
+.modal label:first-of-type{margin-top:0}
+.modal input[type=text],.modal textarea,.modal input[type=date],.modal select{
+  width:100%;border:1.5px solid var(--bd);border-radius:var(--rad-s);padding:10px 12px;
+  font-size:15px;font-family:'Public Sans',sans-serif;color:var(--tx);background:var(--sf2);outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.modal textarea{min-height:72px;resize:vertical}
+.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:var(--forest);box-shadow:0 0 0 3px rgba(31,61,43,.12)}
+.modal-btns{display:flex;gap:8px;margin-top:19px;justify-content:flex-end;flex-wrap:wrap}
+.btn{
+  padding:9px 18px;border-radius:var(--rad-s);border:1.5px solid var(--bd);font-size:14px;font-weight:600;
+  font-family:'Public Sans',sans-serif;cursor:pointer;background:var(--sf);color:var(--tx);transition:background .12s,transform .08s;
+}
+.btn:hover{background:var(--sf2)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.primary{background:var(--forest);color:#f2ead9;border-color:var(--forest-deep)}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn.danger{color:#8b2418;border-color:#c98577;background:transparent}
+.btn.danger:hover{background:#fbe9e5}
+body.dark-mode .btn.danger:hover{background:#3d160f}
+.divider{height:1px;background:var(--bd);margin:15px 0}
+
+.plazo-choice{display:flex;gap:16px;margin:2px 0 10px}
+.plazo-choice label{display:flex;align-items:center;gap:6px;font-weight:500;text-transform:none;font-size:13px;color:var(--tx);margin:0;cursor:pointer}
+.plazo-choice input[type=radio]{width:auto}
+
+/* ---------- TOASTS ---------- */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:10px;max-width:320px}
+.toast{
+  background:var(--forest-deep);color:#f2ead9;padding:12px 18px;border-radius:var(--rad-s);font-size:13px;
+  box-shadow:0 10px 26px -10px rgba(0,0,0,.5);animation:slideIn .3s ease-out;display:flex;align-items:center;gap:10px;
+}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.update{border-left:4px solid var(--g-br)}
+.toast.task{border-left:4px solid var(--y-br)}
+.toast.error{border-left:4px solid #c9584a}
+
+.status-dot{width:8px;height:8px;border-radius:50%;background:#999;display:inline-block;cursor:help}
+.status-dot.online{background:#5f8a4f;box-shadow:0 0 6px #5f8a4f}
+.status-dot.offline{background:#a2493a;box-shadow:0 0 6px #a2493a}
+.status-dot.connecting{background:var(--brass);box-shadow:0 0 6px var(--brass);animation:pulse-dot 1s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+
+.hidden{display:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+
+/* foco visible por teclado */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
+  outline:2.5px solid var(--brass);outline-offset:2px;
+}
+.cell-btn:focus-visible{outline-offset:-3px}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:640px){
+  body{padding:16px 10px 40px}
+  header h1{font-size:21px}
+  .week-bar{padding:10px 12px}
+  .week-num{font-size:17px}
+  .week-nav{width:40px;height:40px;padding:0;font-size:17px}
+  .week-nav-text{display:none}
+  .table-wrap{max-height:72vh;max-height:72dvh}
+  .acts-panel{padding:16px}
+  .modal{padding:20px}
+  .modal input[type=text],.modal textarea,.modal input[type=date],.modal select{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="page" id="main-page">
+
+<header>
+  <div class="header-left">
+    <label class="switch">
+      <input type="checkbox" id="dark-mode-toggle" aria-label="Modo oscuro">
+      <span class="slider"></span>
+    </label>
+    <span class="dark-mode-label">Modo Oscuro</span>
+  </div>
+  <h1>Horario Familiar <span id="connection-status" class="status-dot" title="Desconectado"></span></h1>
+  <div class="header-buttons">
+    <button id="notif-toggle" title="Recibir notificaciones de actividades">🔕 Activar notificaciones</button>
+    <button id="accesoq10"><a href="https://site6.q10.com/login?ReturnUrl=%2F&aplentId=6b624247-5ec3-4fed-968f-86645e0afb0c" target="_blank" rel="noopener">Acceso a Q10</a></button>
+  </div>
+</header>
+
+<div class="week-bar">
+  <button class="week-nav" id="prev-week" title="Semana anterior" aria-label="Semana anterior"><span aria-hidden="true">&#8592;</span><span class="week-nav-text">Semana anterior</span></button>
+  <div class="week-info">
+    <div class="week-num" id="week-range"></div>
+    <div class="week-dates" id="week-sub"></div>
+  </div>
+  <button class="week-nav" id="next-week" title="Semana siguiente" aria-label="Semana siguiente"><span class="week-nav-text">Semana siguiente</span><span aria-hidden="true">&#8594;</span></button>
+</div>
+
+<div class="week-tools">
+  <button class="btn-pill" id="today-btn">📍 Hoy</button>
+  <label class="goto-date">Ir a fecha <input type="date" id="goto-date"></label>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--sf);border-color:var(--bd)"></div>Libre</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--y-bg);border-color:var(--y-br)"></div>Con actividad</div>
+  <div class="legend-item"><div class="legend-dot expired"></div>Plazo vencido</div>
+</div>
+
+<div class="table-wrap" id="table-wrap">
+  <table>
+    <thead>
+      <tr id="thead-row"></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="acts-panel">
+  <h2>📌 Actividades — <span id="acts-week-label"></span></h2>
+  <div id="acts-list"></div>
+</div>
+
+</div>
+
+<div class="overlay" id="overlay-reg" role="dialog" aria-modal="true" aria-labelledby="rm-title">
+  <div class="modal">
+    <h3 id="rm-title">Agregar actividad</h3>
+    <div class="msub" id="rm-sub"></div>
+    <label for="rm-task">Qué toca hacer</label>
+    <textarea id="rm-task" placeholder="Escribe aquí los detalles..."></textarea>
+    <label>¿Tiene plazo?</label>
+    <div class="plazo-choice">
+      <label><input type="radio" name="rm-has-due" id="rm-has-due-si"> Sí</label>
+      <label><input type="radio" name="rm-has-due" id="rm-has-due-no"> No</label>
+    </div>
+    <div id="rm-due-wrap">
+      <label for="rm-due">Plazo (fecha límite)</label>
+      <input type="date" id="rm-due">
+    </div>
+    <div class="divider"></div>
+    <label for="rm-notes">Notas generales (no cambian el color)</label>
+    <textarea id="rm-notes" placeholder="Notas, recordatorios, etc..."></textarea>
+    <div class="modal-btns">
+      <button class="btn danger" id="rm-clear">Borrar todo</button>
+      <button class="btn" id="rm-cancel">Cancelar</button>
+      <button class="btn primary" id="rm-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+'use strict';
+
+/* ================= CONFIGURACIÓN (config.js) ================= */
+const CFG = window.HORARIO_CONFIG || {};
+const SUPABASE_OK = !!CFG.SUPABASE_URL && !!CFG.SUPABASE_ANON_KEY
+  && !/TU-PROYECTO/i.test(CFG.SUPABASE_URL) && !/^TU_/.test(CFG.SUPABASE_ANON_KEY);
+const VAPID_PUBLIC_KEY = CFG.VAPID_PUBLIC_KEY || '';
+const VAPID_OK = !!VAPID_PUBLIC_KEY && !/^TU_/.test(VAPID_PUBLIC_KEY);
+const supabaseClient = SUPABASE_OK ? supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY) : null;
+
+/* ================= UTILIDADES ================= */
+const $ = id => document.getElementById(id);
+
+const DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MONTHS_SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+const pad = n => String(n).padStart(2, '0');
+// Las fechas se manejan SIEMPRE como "YYYY-MM-DD" en hora local (nunca toISOString,
+// que convierte a UTC y puede correr el día).
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const mondayOf = d => addDays(d, -((d.getDay() + 6) % 7));
+const dayName = d => DAYS[(d.getDay() + 6) % 7];
+const fmtLong = d => `${dayName(d)} ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
+const fmtShort = d => `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+const hourLabel = h => `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'a. m.' : 'p. m.'}`;   // 0 → "12 a. m."
+const hourRange = h => `${hourLabel(h)} – ${hourLabel((h + 1) % 24)}`;                   // 23 → "11 p. m. – 12 a. m."
+
+// Semana ISO (lunes a domingo), calculada solo a partir de la fecha: sin "ancla" artificial.
+function isoWeek(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const y0 = Date.UTC(t.getUTCFullYear(), 0, 1);
+  return { week: Math.ceil(((t - y0) / 86400000 + 1) / 7), year: t.getUTCFullYear() };
+}
+
+// Todo texto escrito por el usuario pasa por aquí antes de entrar al HTML.
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function isExpired(due) {
+  if (!due) return false;
+  return new Date(due + 'T23:59:59') < new Date();
+}
+
+function isNetworkError(err) {
+  return err instanceof TypeError || (err && /failed to fetch/i.test(err.message || ''));
+}
+
+async function withRetry(taskFn, { retries = 2, delayMs = 900 } = {}) {
+  let lastErr = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const result = await taskFn();
+      if (result && result.error) {
+        if (isNetworkError(result.error) && attempt < retries) {
+          await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+          continue;
+        }
+        return result;
+      }
+      return result;
+    } catch (err) {
+      lastErr = err;
+      if (isNetworkError(err) && attempt < retries) {
+        await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+        continue;
+      }
+      return { data: null, error: err };
+    }
+  }
+  return { data: null, error: lastErr };
+}
+
+function friendlyErrorMessage(error, action) {
+  if (!error) return null;
+  if (isNetworkError(error)) return `No se pudo ${action}: sin conexión con el servidor.`;
+  return `Error al ${action}: ${error.message || error}`;
+}
+
+function setConnectionStatus(state) {
+  const statusDot = $('connection-status');
+  if (!statusDot) return;
+  statusDot.classList.remove('online', 'offline', 'connecting');
+  if (state === 'online') statusDot.classList.add('online'), statusDot.title = 'Conectado';
+  else if (state === 'connecting') statusDot.classList.add('connecting'), statusDot.title = 'Conectando…';
+  else statusDot.classList.add('offline'), statusDot.title = 'Sin conexión con el servidor';
+}
+
+function showToast(msg, type = 'update') {
+  const container = $('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), type === 'error' ? 6000 : 4000);
+}
+
+/* ================= ESTADO ================= */
+let weekStart = mondayOf(new Date());   // lunes (00:00 local) de la semana mostrada
+let acts = new Map();                   // 'YYYY-MM-DD|hora' → actividad de la semana mostrada
+let plazoRows = [];                     // actividades (de cualquier fecha) cuyo plazo toca esta semana
+const weekCache = new Map();            // 'YYYY-MM-DD' (lunes) → { acts, plazoRows }, para cambiar de semana sin parpadeo
+let loadToken = 0;
+let editing = null;                     // { fecha, hora } de la franja abierta en el modal
+let lastNowKey = '';
+
+const actKey = (fecha, hora) => `${fecha}|${hora}`;
+const findAct = (fecha, hora) => acts.get(actKey(fecha, hora)) || plazoRows.find(a => a.fecha === fecha && a.hora === hora) || null;
+
+function normalize(row) {
+  return {
+    id: row.id,
+    fecha: row.fecha,
+    hora: Number(row.hora),
+    tiene_plazo: !!row.tiene_plazo,
+    fecha_plazo: row.fecha_plazo || '',
+    que_hacer: row.que_hacer || '',
+    notas: row.notas_generales || ''
+  };
+}
+
+/* ================= RENDER ================= */
+function renderWeekHeader() {
+  const end = addDays(weekStart, 6);
+  let range;
+  if (weekStart.getFullYear() !== end.getFullYear()) {
+    range = `${fmtShort(weekStart)} ${weekStart.getFullYear()} – ${fmtShort(end)} ${end.getFullYear()}`;
+  } else if (weekStart.getMonth() !== end.getMonth()) {
+    range = `${fmtShort(weekStart)} – ${fmtShort(end)}`;
+  } else {
+    range = `${weekStart.getDate()} – ${end.getDate()} de ${MONTHS[end.getMonth()]}`;
+  }
+  const iso = isoWeek(weekStart);
+  $('week-range').textContent = range;
+  $('week-sub').textContent = `Semana ${iso.week} · ${iso.year}`;
+  $('acts-week-label').textContent = range;
+}
+
+// Actividades con plazo que "siguen vigentes" en cada día de la semana mostrada
+// (desde el día en que se asignaron hasta su fecha límite, sin repetir su propia celda).
+function computePlazos(days) {
+  const byCol = days.map(() => []);
+  plazoRows.forEach(a => {
+    if (!a.que_hacer.trim() || !a.tiene_plazo || !a.fecha_plazo) return;
+    if (a.fecha_plazo < a.fecha) return;
+    days.forEach((d, col) => {
+      const ds = ymd(d);
+      if (ds === a.fecha || ds < a.fecha || ds > a.fecha_plazo) return;
+      byCol[col].push(a);
+    });
+  });
+  byCol.forEach(list => list.sort((x, y) => x.hora - y.hora));
+  return byCol;
+}
+
+function cellHtml(fecha, hora, isTodayCol) {
+  const a = acts.get(actKey(fecha, hora));
+  const hasTask = !!(a && a.que_hacer.trim());
+  const hasNotes = !!(a && a.notas.trim());
+  const expired = hasTask && a.tiene_plazo && isExpired(a.fecha_plazo);
+  const cls = 'cell' + (hasTask ? ' yellow' : '') + (expired ? ' expired' : '') + (isTodayCol ? ' is-today' : '');
+
+  let inner = '';
+  if (!a) inner = '<span class="plus" aria-hidden="true">+</span>';
+  else {
+    if (hasTask) inner += `<span class="act-text">${esc(a.que_hacer)}</span>`;
+    if (hasTask && a.tiene_plazo && a.fecha_plazo) inner += `<span class="due-badge">📅 ${fmtShort(parseYmd(a.fecha_plazo))}</span>`;
+    if (hasNotes) inner += `<span class="notes-snippet">📝 ${esc(a.notas)}</span>`;
+    if (!hasTask && !hasNotes) inner = '<span class="plus" aria-hidden="true">+</span>';
+  }
+
+  const base = `${fmtLong(parseYmd(fecha))}, ${hourRange(hora)}`;
+  const state = hasTask ? `: ${a.que_hacer}` : (hasNotes ? ': solo notas' : ': agregar actividad');
+  return `<td class="${cls}" data-fecha="${fecha}" data-hora="${hora}"><button type="button" class="cell-btn" aria-label="${esc(base + state)}">${inner}</button></td>`;
+}
+
+function renderGrid() {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const now = new Date();
+  const todayStr = ymd(now);
+  const weekHasToday = days.some(d => ymd(d) === todayStr);
+  lastNowKey = `${todayStr}|${now.getHours()}`;
+
+  $('thead-row').innerHTML = '<th scope="col">Hora</th>' + days.map(d =>
+    `<th scope="col" class="day-head${ymd(d) === todayStr ? ' today-head' : ''}"><span class="dh-name">${dayName(d)}</span><span class="dh-date">${fmtShort(d)}</span></th>`
+  ).join('');
+
+  let html = '';
+  const plazos = computePlazos(days);
+  if (plazos.some(list => list.length)) {
+    html += '<tr class="plazos-row"><td class="time-cell">⏳\nPlazos</td>' + plazos.map(list =>
+      `<td class="cell plazos-cell">${list.map(a =>
+        `<button type="button" class="plazo-badge" data-fecha="${a.fecha}" data-hora="${a.hora}" title="${esc(fmtLong(parseYmd(a.fecha)) + ' · ' + hourRange(a.hora))}">⏳ ${hourLabel(a.hora)}: ${esc(a.que_hacer)}</button>`
+      ).join('')}</td>`
+    ).join('') + '</tr>';
+  }
+
+  for (let h = 0; h < 24; h++) {
+    const isNowRow = weekHasToday && h === now.getHours();
+    html += `<tr data-hora="${h}"><td class="time-cell${isNowRow ? ' now' : ''}">${hourLabel(h)}\n${hourLabel((h + 1) % 24)}</td>`;
+    days.forEach(d => { const ds = ymd(d); html += cellHtml(ds, h, ds === todayStr); });
+    html += '</tr>';
+  }
+  $('tbody').innerHTML = html;
+}
+
+function renderActivityList() {
+  const list = $('acts-list');
+  const items = [...acts.values()]
+    .filter(a => a.que_hacer.trim())
+    .sort((x, y) => x.fecha.localeCompare(y.fecha) || x.hora - y.hora);
+
+  if (!items.length) {
+    list.innerHTML = '<div class="no-acts">¡Sin actividades esta semana! 🎉</div>';
+    return;
+  }
+
+  list.innerHTML = '<div class="act-cards">' + items.map(a => {
+    const expired = a.tiene_plazo && isExpired(a.fecha_plazo);
+    const dueStr = (a.tiene_plazo && a.fecha_plazo)
+      ? `<div class="ac-due">📅 ${esc(new Date(a.fecha_plazo + 'T12:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }))}</div>`
+      : '';
+    return `<div class="act-card reg${expired ? ' expired' : ''}" role="button" tabindex="0" data-fecha="${a.fecha}" data-hora="${a.hora}">
+      <div class="ac-header"><span class="ac-title">${esc(fmtLong(parseYmd(a.fecha)))}</span><span class="ac-hour">${esc(hourRange(a.hora))}</span></div>
+      <div class="ac-desc">${esc(a.que_hacer)}</div>${dueStr}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function render() {
+  renderWeekHeader();
+  renderGrid();
+  renderActivityList();
+}
+
+function scrollToHour(h) {
+  const wrap = $('table-wrap');
+  const row = wrap.querySelector(`tr[data-hora="${Math.max(0, h)}"]`);
+  if (!row) return;
+  const head = wrap.querySelector('thead').offsetHeight;
+  const top = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - head - 2;
+  wrap.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+}
+
+/* ================= NAVEGACIÓN ENTRE SEMANAS ================= */
+function goToWeek(newStart, { scrollNow = false } = {}) {
+  weekStart = newStart;
+  const cached = weekCache.get(ymd(weekStart));
+  acts = cached ? cached.acts : new Map();
+  plazoRows = cached ? cached.plazoRows : [];
+  render();
+  if (scrollNow) scrollToHour(new Date().getHours() - 1);
+  loadWeek({ silent: !!cached });
+}
+
+$('prev-week').onclick = () => goToWeek(addDays(weekStart, -7));
+$('next-week').onclick = () => goToWeek(addDays(weekStart, 7));
+$('today-btn').onclick = () => { $('goto-date').value = ''; goToWeek(mondayOf(new Date()), { scrollNow: true }); };
+$('goto-date').onchange = e => { if (e.target.value) goToWeek(mondayOf(parseYmd(e.target.value))); };
+
+/* ================= MODAL: AGREGAR / EDITAR ACTIVIDAD ================= */
+let lastFocus = null;
+
+function setPlazoUI(hasDue, dueVal) {
+  $('rm-has-due-si').checked = hasDue;
+  $('rm-has-due-no').checked = !hasDue;
+  $('rm-due-wrap').style.display = hasDue ? 'block' : 'none';
+  $('rm-due').value = dueVal || '';
+}
+
+$('rm-has-due-si').onchange = () => { $('rm-due-wrap').style.display = 'block'; };
+$('rm-has-due-no').onchange = () => { $('rm-due-wrap').style.display = 'none'; $('rm-due').value = ''; };
+
+function openModal(fecha, hora) {
+  editing = { fecha, hora };
+  lastFocus = document.activeElement;
+  const a = findAct(fecha, hora);
+  $('rm-title').textContent = a ? 'Editar actividad' : 'Agregar actividad';
+  $('rm-sub').textContent = `${fmtLong(parseYmd(fecha))} · ${hourRange(hora)}`;
+  $('rm-task').value = a ? a.que_hacer : '';
+  $('rm-notes').value = a ? a.notas : '';
+  setPlazoUI(!!(a && a.tiene_plazo), a && a.fecha_plazo);
+  $('rm-clear').style.display = a ? '' : 'none';
+  $('overlay-reg').classList.add('open');
+  setTimeout(() => $('rm-task').focus(), 80);
+}
+
+function closeModal() {
+  $('overlay-reg').classList.remove('open');
+  editing = null;
+  if (lastFocus && document.contains(lastFocus) && lastFocus.focus) lastFocus.focus();
+  lastFocus = null;
+}
+
+// Un solo manejador para toda la tabla y la lista (en vez de uno por celda).
+function onActivityClick(e) {
+  const el = e.target.closest('[data-fecha][data-hora]');
+  if (el) openModal(el.dataset.fecha, Number(el.dataset.hora));
+}
+$('tbody').addEventListener('click', onActivityClick);
+$('acts-list').addEventListener('click', onActivityClick);
+$('acts-list').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.act-card')) { e.preventDefault(); onActivityClick(e); }
+});
+
+$('rm-cancel').onclick = closeModal;
+$('overlay-reg').onclick = e => { if (e.target === $('overlay-reg')) closeModal(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('overlay-reg').classList.contains('open')) closeModal(); });
+
+$('rm-save').onclick = async () => {
+  if (!editing) return;
+  const que = $('rm-task').value.trim();
+  const notas = $('rm-notes').value.trim();
+  const hasDue = $('rm-has-due-si').checked;
+  const due = hasDue ? $('rm-due').value : '';
+  if (hasDue && !due) { showToast('Selecciona la fecha del plazo, o marca "No"', 'error'); return; }
+
+  const { fecha, hora } = editing;
+  const existing = findAct(fecha, hora);
+
+  // Sin "qué toca hacer" ni notas no hay actividad: se borra si existía.
+  if (!que && !notas) {
+    if (existing) await deleteActivity(); else closeModal();
+    return;
+  }
+
+  const btn = $('rm-save');
+  btn.disabled = true;
+  const ok = await saveToDB({
+    fecha, hora,
+    tiene_plazo: hasDue,
+    fecha_plazo: hasDue ? due : null,
+    que_hacer: que || null,
+    notas_generales: notas || null
+  });
+  btn.disabled = false;
+  if (!ok) return; // el modal queda abierto para no perder lo escrito
+  closeModal();
+  showToast('Guardado exitosamente!', 'task');
+};
+
+$('rm-clear').onclick = deleteActivity;
+
+async function deleteActivity() {
+  if (!editing) return;
+  const { fecha, hora } = editing;
+  const ok = await deleteFromDB(fecha, hora);
+  if (ok) closeModal();
+}
+
+/* ================= SUPABASE ================= */
+async function loadWeek({ silent = false } = {}) {
+  if (!supabaseClient) return false;
+  const token = ++loadToken;
+  const mondayStr = ymd(weekStart);
+  const from = mondayStr;
+  const to = ymd(addDays(weekStart, 6));
+  setConnectionStatus('connecting');
+
+  const [rWeek, rPlazo] = await Promise.all([
+    withRetry(() => supabaseClient.from('actividades').select('*').gte('fecha', from).lte('fecha', to).order('hora')),
+    // actividades (de esta u otras semanas) cuyo plazo cae dentro o después del inicio de la semana mostrada
+    withRetry(() => supabaseClient.from('actividades').select('*').eq('tiene_plazo', true).lte('fecha', to).gte('fecha_plazo', from))
+  ]);
+  if (token !== loadToken) return false; // llegó una respuesta de una semana que ya no se está mostrando
+
+  const error = rWeek.error || rPlazo.error;
+  if (error) {
+    setConnectionStatus('offline');
+    if (!silent) showToast(friendlyErrorMessage(error, 'cargar las actividades'), 'error');
+    return false;
+  }
+
+  acts = new Map(rWeek.data.map(r => { const a = normalize(r); return [actKey(a.fecha, a.hora), a]; }));
+  plazoRows = rPlazo.data.map(normalize);
+  weekCache.set(mondayStr, { acts, plazoRows });
+  setConnectionStatus('online');
+  render();
+  return true;
+}
+
+let reloadTimer = null;
+function scheduleReload() {
+  clearTimeout(reloadTimer);
+  reloadTimer = setTimeout(() => loadWeek({ silent: true }), 250);
+}
+
+function initRealtime() {
+  if (!supabaseClient) return;
+  supabaseClient
+    .channel('public:actividades')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'actividades' }, scheduleReload)
+    .subscribe(status => {
+      console.log('Realtime status:', status);
+      if (status === 'SUBSCRIBED') setConnectionStatus('online');
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setConnectionStatus('offline');
+    });
+}
+
+async function saveToDB(payload) {
+  if (!supabaseClient) { showToast('Falta configurar config.js (Supabase)', 'error'); return false; }
+  const { error } = await withRetry(() => supabaseClient
+    .from('actividades')
+    .upsert(payload, { onConflict: 'fecha,hora' }));
+  if (error) { setConnectionStatus('offline'); showToast(friendlyErrorMessage(error, 'guardar'), 'error'); return false; }
+  setConnectionStatus('online');
+
+  // Se refleja al instante; el reload posterior (y el realtime) confirman con la base de datos.
+  const a = normalize(payload);
+  const prev = findAct(a.fecha, a.hora);
+  if (prev) a.id = prev.id;
+  if (a.fecha >= ymd(weekStart) && a.fecha <= ymd(addDays(weekStart, 6))) acts.set(actKey(a.fecha, a.hora), a);
+  render();
+  loadWeek({ silent: true });
+  return true;
+}
+
+async function deleteFromDB(fecha, hora) {
+  if (!supabaseClient) { showToast('Falta configurar config.js (Supabase)', 'error'); return false; }
+  const { error } = await withRetry(() => supabaseClient
+    .from('actividades')
+    .delete()
+    .match({ fecha, hora }));
+  if (error) { setConnectionStatus('offline'); showToast(friendlyErrorMessage(error, 'borrar'), 'error'); return false; }
+  setConnectionStatus('online');
+  acts.delete(actKey(fecha, hora));
+  plazoRows = plazoRows.filter(a => !(a.fecha === fecha && a.hora === hora));
+  render();
+  loadWeek({ silent: true });
+  return true;
+}
+
+/* ================= NOTIFICACIONES PUSH ================= */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+function subToRow(sub) { const json = sub.toJSON(); return { endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth }; }
+
+async function getExistingSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  const reg = await navigator.serviceWorker.ready;
+  return reg.pushManager.getSubscription();
+}
+
+async function refreshNotifButton() {
+  const btn = $('notif-toggle');
+  if (!btn) return;
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) { btn.disabled = true; btn.textContent = '🔕 No disponible'; return; }
+  if (Notification.permission === 'denied') { btn.classList.remove('active'); btn.textContent = '🔕 Notificaciones bloqueadas'; return; }
+  const sub = await getExistingSubscription();
+  if (sub) { btn.classList.add('active'); btn.textContent = '🔔 Notificaciones activadas'; }
+  else { btn.classList.remove('active'); btn.textContent = '🔕 Activar notificaciones'; }
+}
+
+async function enablePushNotifications() {
+  if (!VAPID_OK || !supabaseClient) { showToast('Falta configurar config.js (Supabase y VAPID_PUBLIC_KEY)', 'error'); return; }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') { showToast('Permiso de notificaciones denegado', 'error'); await refreshNotifButton(); return; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    }
+    const { error } = await withRetry(() => supabaseClient.from('push_subscriptions').insert(subToRow(sub)));
+    if (error) showToast(friendlyErrorMessage(error, 'activar notificaciones'), 'error');
+    else showToast('Notificaciones activadas!', 'update');
+  } catch (err) { console.error(err); showToast('Error al activar notificaciones: ' + err.message, 'error'); }
+  await refreshNotifButton();
+}
+
+async function disablePushNotifications() {
+  try {
+    const sub = await getExistingSubscription();
+    if (sub) {
+      const row = subToRow(sub);
+      await sub.unsubscribe();
+      if (supabaseClient) await withRetry(() => supabaseClient.from('push_subscriptions').delete().match({ endpoint: row.endpoint }));
+    }
+    showToast('Notificaciones desactivadas');
+  } catch (err) { console.error(err); showToast('Error al desactivar notificaciones: ' + err.message, 'error'); }
+  await refreshNotifButton();
+}
+
+$('notif-toggle').addEventListener('click', async () => {
+  const btn = $('notif-toggle'); if (btn.disabled) return;
+  const sub = await getExistingSubscription(); if (sub) await disablePushNotifications(); else await enablePushNotifications();
+});
+
+/* ================= ARRANQUE ================= */
+$('dark-mode-toggle').addEventListener('change', e => {
+  document.body.classList.toggle('dark-mode', e.target.checked);
+  localStorage.setItem('darkMode', e.target.checked);
+});
+
+function init() {
+  // Limpieza: versiones anteriores guardaban usuario/contraseña y eventos en este navegador.
+  ['horarioCreds', 'horarioEvents'].forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* sin acceso a localStorage */ } });
+
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark-mode');
+    $('dark-mode-toggle').checked = true;
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registered:', reg)).catch(err => console.error('SW error:', err));
+  }
+
+  render();
+  scrollToHour(new Date().getHours() - 1);
+
+  if (SUPABASE_OK) {
+    loadWeek();
+    initRealtime();
+  } else {
+    setConnectionStatus('offline');
+    showToast('Falta configurar config.js con los datos de tu proyecto de Supabase', 'error');
+  }
+  refreshNotifButton();
+
+  // Mantiene "hoy" y la hora actual resaltados si la página queda abierta.
+  setInterval(() => {
+    const n = new Date();
+    if (`${ymd(n)}|${n.getHours()}` !== lastNowKey && !$('overlay-reg').classList.contains('open')) renderGrid();
+  }, 60000);
+}
+
+window.addEventListener('online', () => loadWeek({ silent: true }));
+window.addEventListener('offline', () => setConnectionStatus('offline'));
+
+init();
+</script>
+</body>
+</html>
