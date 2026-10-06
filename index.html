@@ -365,7 +365,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="modal">
     <h3 id="rm-title">Agregar actividad</h3>
     <div class="msub" id="rm-sub"></div>
-    <label for="rm-task">Qué toca hacer</label>
+    <label for="rm-task">Actividad a realizar</label>
     <textarea id="rm-task" placeholder="Escribe aquí los detalles..."></textarea>
     <label>¿Tiene plazo?</label>
     <div class="plazo-choice">
@@ -716,7 +716,7 @@ $('rm-save').onclick = async () => {
   const { fecha, hora } = editing;
   const existing = findAct(fecha, hora);
 
-  // Sin "qué toca hacer" ni notas no hay actividad: se borra si existía.
+  // Sin actividad a realizar ni notas no hay actividad: se borra si existía.
   if (!que && !notas) {
     if (existing) await deleteActivity(); else closeModal();
     return;

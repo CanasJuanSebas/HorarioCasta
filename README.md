@@ -1,7 +1,7 @@
 # Horario Familiar
 
 Horario semanal (lunes a domingo) con **24 franjas por día**, navegable durante todo el año.
-Estructura: **Día → Hora → Actividad**. Cada actividad tiene *Qué toca hacer*, *¿Tiene plazo?* y *Notas generales*.
+Estructura: **Día → Hora → Actividad**. Cada actividad tiene *Actividad a realizar*, *¿Tiene plazo?* y *Notas generales*.
 Sin login. Datos en Supabase. Notificaciones push reales (Web Push).
 
 ```
@@ -37,7 +37,7 @@ Se crean ejecutando el SQL del paso 9. Esta es la estructura:
 | `hora` | `smallint`, not null, 0–23 | Hora de inicio: `0` = 12 a. m.–1 a. m. … `23` = 11 p. m.–12 a. m. |
 | `tiene_plazo` | `boolean`, not null, default `false` | ¿Tiene plazo? |
 | `fecha_plazo` | `date`, null | Fecha límite; obligatoria si `tiene_plazo` es `true` y nula si es `false` |
-| `que_hacer` | `text` | Qué toca hacer |
+| `que_hacer` | `text` | Actividad a realizar |
 | `notas_generales` | `text` | Notas generales |
 | `created_at` | `timestamptz`, default `now()` | |
 | `updated_at` | `timestamptz`, default `now()` | Se actualiza sola en cada cambio (trigger) |
@@ -63,7 +63,7 @@ En Supabase: menú izquierdo **SQL Editor** → **New query** → pega el conten
 
 ```sql
 insert into private.app_secrets (key, value) values
-  ('edge_function_url', 'https://TU_PROJECT_REF.functions.supabase.co/send-push'),
+  ('edge_function_url', 'https://TU_PROJECT_REF.supabase.co/functions/v1/send-push'),
   ('cron_secret', 'EL_MISMO_SECRETO_QUE_USARAS_EN_CRON_SECRET')
 ```
 
@@ -122,7 +122,7 @@ supabase link --project-ref TU_PROJECT_REF
 supabase functions deploy send-push --project-ref TU_PROJECT_REF
 ```
 
-Después ejecuta `sql/02_notificaciones_push.sql` (con tu URL `https://TU_PROJECT_REF.functions.supabase.co/send-push` y el mismo `CRON_SECRET`). `TU_PROJECT_REF` es el subdominio de tu Project URL.
+Después ejecuta `sql/02_notificaciones_push.sql` (con tu URL `https://TU_PROJECT_REF.supabase.co/functions/v1/send-push` y el mismo `CRON_SECRET`). `TU_PROJECT_REF` es el identificador de tu proyecto Supabase.
 
 Finalmente, en la app pulsa **"🔕 Activar notificaciones"** y acepta el permiso (una vez por cada dispositivo/navegador).
 > Si ese navegador ya tenía las notificaciones activadas con el proyecto anterior, pulsa el botón para **desactivarlas y vuelve a activarlas**: así se registra en la base nueva.
@@ -131,7 +131,7 @@ Finalmente, en la app pulsa **"🔕 Activar notificaciones"** y acepta el permis
 
 | Aviso | Cuándo | Texto |
 |---|---|---|
-| 📌 Nueva actividad / ✏️ Actividad modificada | Al crear o cambiar *qué toca hacer* o el plazo (no por cambios solo de notas) | Hora, fecha, ¿Qué toca hacer?, ¿Tiene plazo? y notas si hay |
+| 📌 Nueva actividad / ✏️ Actividad modificada | Al crear o cambiar la actividad a realizar o el plazo (no por cambios solo de notas) | Actividad a realizar, hora, fecha, plazo y notas si hay |
 | 📚 Actividad próxima | Al inicio de cada hora, si hay actividad en esa franja (los 7 días) | Igual que arriba |
 | ☀️ Actividades de hoy (N) | Todos los días a las 5:30 a. m. (hora Bogotá) | Lista de las actividades del día |
 

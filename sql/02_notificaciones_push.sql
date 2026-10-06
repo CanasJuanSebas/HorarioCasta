@@ -6,7 +6,7 @@
 --   2) Un lugar privado (no accesible desde el navegador) para guardar
 --      la URL de la Edge Function y un secreto compartido con ella.
 --   3) Funciones que arman el TEXTO de cada notificación con los datos
---      de la actividad (fecha, hora, qué toca hacer, plazo, notas).
+--      de la actividad (actividad a realizar, fecha, hora, plazo, notas).
 --   4) Un trigger: cuando se crea o cambia una actividad, se avisa.
 --   5) pg_cron: al inicio de cada hora, si hay una actividad en esa
 --      franja, se avisa.
@@ -15,7 +15,7 @@
 --
 -- IMPORTANTE: antes de correr esto, ten a la mano:
 --   - La URL de tu Edge Function:
---     https://TU_PROJECT_REF.functions.supabase.co/send-push
+--     https://TU_PROJECT_REF.supabase.co/functions/v1/send-push
 --   - Un secreto (texto largo y aleatorio) que también configurarás como
 --     variable CRON_SECRET en la función (ver README.md).
 -- ============================================================
@@ -66,7 +66,7 @@ alter table private.app_secrets enable row level security;
 
 -- >>> REEMPLAZA estos dos valores por los tuyos antes de ejecutar <<<
 insert into private.app_secrets (key, value) values
-  ('edge_function_url', 'https://REEMPLAZA-TU-PROYECTO.functions.supabase.co/send-push'),
+  ('edge_function_url', 'https://TU_PROJECT_REF.supabase.co/functions/v1/send-push'),
   ('cron_secret', 'REEMPLAZA-POR-UN-SECRETO-LARGO-Y-ALEATORIO')
 on conflict (key) do update set value = excluded.value;
 
@@ -127,13 +127,14 @@ returns text language sql immutable as $$
 $$;
 
 -- Cuerpo común de la notificación de UNA actividad:
---   🕐 hora · 📅 fecha · ¿Qué toca hacer? · ¿Tiene plazo? · (notas si hay)
+--   Actividad a realizar: texto · 🕐 hora · 📅 fecha · plazo · (notas si hay)
 create or replace function public.actividad_texto(a public.actividades)
 returns text language sql stable as $$
-  select '🕐 ' || public.rango_hora(a.hora::int) || E'\n'
-      || '📅 ' || public.fecha_larga(a.fecha) || E'\n\n'
-      || '¿Qué toca hacer?' || E'\n' || left(btrim(a.que_hacer), 500) || E'\n\n'
-      || '¿Tiene plazo?' || E'\n'
+  select 'Actividad a realizar: '
+      || left(regexp_replace(btrim(coalesce(a.que_hacer, '')), '[[:space:]]+', ' ', 'g'), 500)
+      || E'\n🕐 ' || public.rango_hora(a.hora::int)
+      || ' · 📅 ' || public.fecha_larga(a.fecha) || E'\n'
+      || '¿Tiene plazo? '
       || (case when a.tiene_plazo and a.fecha_plazo is not null
                then 'Sí, hasta el ' || lower(public.fecha_larga(a.fecha_plazo))
                else 'No' end)
